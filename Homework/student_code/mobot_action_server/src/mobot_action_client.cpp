@@ -3,17 +3,23 @@
 
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-
-//this #include refers to the new "action" message defined for this package
-// the action message can be found in: .../mobot_action_server/action/demo.action
-// automated header generation creates multiple headers for message I/O
-// these are referred to by the root name (demo) and appended name (Action)
-// If you write a new client of the server in this package, you will need to include mobot_action_server in your package.xml,
-// and include the header file below
 #include <mobot_action_server/demoAction.h>
+#include <std_msgs/Bool.h>
 
 #define PI 3.1415926
 
+bool g_lidar_alarm=false; // global var for lidar alarm
+
+void alarmCallback(const std_msgs::Bool& alarm_msg) 
+{ 
+  g_lidar_alarm = alarm_msg.data; //make the alarm status global, so main() can use it
+  if (g_lidar_alarm) {
+    ROS_INFO("LIDAR alarm received!"); 
+  }
+  else {
+    ROS_INFO("no LIDAR alarm!"); 
+  }
+} 
 
 // This function will be called once when the goal completes
 // this is optional, but it is a convenient way to get access to the "result" message sent by the server
@@ -25,7 +31,8 @@ void doneCb(const actionlib::SimpleClientGoalState& state,
 }
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "mobot_action_client_node"); // name this node 
+    ros::init(argc, argv, "mobot_action_client_node"); // name this node
+    ros::NodeHandle n;
     int g_count = 0;
     // here is a "goal" object compatible with the server, as defined in mobot_action_server/action
     mobot_action_server::demoGoal goal; 
@@ -45,29 +52,28 @@ int main(int argc, char** argv) {
         return 0; // bail out; optionally, could print a warning message and retry
     }
     
-
     ROS_INFO("connected to action server");  // if here, then we connected to the server;
 
-
-
-
-
-    int subgoals = 1;
     while(true) {
-        // stuff a goal message:
-        g_count++;
-        goal.input = g_count; // this merely sequentially numbers the goals sent
+        ros::Subscriber alarm_subscriber = n.subscribe("lidar_alarm",1,alarmCallback); 
 
-        float travel_distance = 5;
-        float spin_angle = PI/2;
-        goal.distance = travel_distance;
-        goal.angle = spin_angle;
+        goal.distance.resize(5);
+        goal.distance[0] = 4; 
+        goal.distance[1] = 2; 
+        goal.distance[2] = 4; 
+        goal.distance[3] = 2; 
+        goal.distance[4] = 4;
+
+        goal.angle.resize(5);
+        goal.angle[0] = 4;
+        goal.angle[1] = PI/2;
+        goal.angle[2] = PI/2;
+        goal.angle[3] = -PI/2;
+        goal.angle[4] = -PI/2;
 
         //action_client.sendGoal(goal); // simple example--send goal, but do not specify callbacks
         action_client.sendGoal(goal,&doneCb); // we could also name additional callback functions here, if desired
         //action_client.sendGoal(goal, &doneCb, &activeCb, &feedbackCb); //e.g., like this
-
-        subgoals++;
     }
 
     return 0;

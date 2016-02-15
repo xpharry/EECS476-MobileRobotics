@@ -9,7 +9,7 @@
 const double MIN_SAFE_DISTANCE = 1.0; // set alarm if anything is within 0.5m of the front of robot
 
 // these values to be set within the laser callback
-float ping_dist_in_front_=3.0; // global var to hold length of a SINGLE LIDAR ping--in front
+float ping_dist_swiped_=3.0; // global var to hold length of a SINGLE LIDAR ping--in front
 int ping_index_= -1; // NOT real; callback will have to find this
 double angle_min_=0.0;
 double angle_max_=0.0;
@@ -34,25 +34,29 @@ void laserCallback(const sensor_msgs::LaserScan& laser_scan) {
         // what is the index of the ping that is straight ahead?
         // BETTER would be to use transforms, which would reference how the LIDAR is mounted;
         // but this will do for simple illustration
-        ping_index_ = (int) ((0.0 -angle_min_)/angle_increment_);
-        ROS_INFO("LIDAR setup: ping_index = %d",ping_index_);
-        
+        ping_index_ = (int) ((0.0 - angle_min_)/angle_increment_);
+        ROS_INFO("LIDAR setup: ping_index = %d",ping_index_); 
     }
     
-   ping_dist_in_front_ = laser_scan.ranges[ping_index_];
-   ROS_INFO("ping dist in front = %f",ping_dist_in_front_);
-   if (ping_dist_in_front_<MIN_SAFE_DISTANCE) {
-       ROS_WARN("DANGER, WILL ROBINSON!!");
-       laser_alarm_=true;
+    for(int index = ping_index_-200; index <= ping_index_+200; index++) {
+      ping_dist_swiped_ = laser_scan.ranges[index];
+      ROS_INFO("ping dist swiped No. = %d", index);
+
+      if (ping_dist_swiped_ < MIN_SAFE_DISTANCE) {
+         ROS_WARN("DANGER, WILL ROBINSON!!");
+         laser_alarm_=true;
+         break;
+      }
+      else {
+         laser_alarm_=false;
+      }
    }
-   else {
-       laser_alarm_=false;
-   }
+   
    std_msgs::Bool lidar_alarm_msg;
    lidar_alarm_msg.data = laser_alarm_;
    lidar_alarm_publisher_.publish(lidar_alarm_msg);
    std_msgs::Float32 lidar_dist_msg;
-   lidar_dist_msg.data = ping_dist_in_front_;
+   lidar_dist_msg.data = ping_dist_swiped_;
    lidar_dist_publisher_.publish(lidar_dist_msg);   
 }
 

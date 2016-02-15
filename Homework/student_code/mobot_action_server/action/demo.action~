@@ -2,8 +2,8 @@
 #the lines with the hash signs are merely comments
 #goal, result and feedback are defined by this fixed order, and separated by 3 hyphens
 int32 input
-float64 travel_distance
-float64 spin_angle
+float64 distance[]
+float64 angle[]
 ---
 #result definition
 int32 output

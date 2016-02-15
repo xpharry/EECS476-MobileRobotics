@@ -1,24 +1,15 @@
-// mobot_action_server: a simple action server
-// Wyatt Newman
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-//the following #include refers to the "action" message defined for this package
-// The action message can be found in: .../mobot_action_server/action/demo.action
-// Automated header generation creates multiple headers for message I/O
-// These are referred to by the root name (demo) and appended name (Action)
 #include <mobot_action_server/demoAction.h>
-
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
 
 int g_count = 0;
 bool g_count_failure = false;
 
-// =======================================================================================================
 //some tunable constants, global
 const double g_move_speed = 1.0; // set forward speed to this value, e.g. 1m/s
-const double g_spin_speed = 1.0; // set yaw rate to this value, e.g. 1 rad/s
+const double g_spin_speed = 0.5; // set yaw rate to this value, e.g. 1 rad/s
 const double g_sample_dt = 0.01;
 
 //global variables, including a publisher object
@@ -135,8 +126,6 @@ void do_inits(ros::NodeHandle &n) {
     g_twist_commander = n.advertise<geometry_msgs::Twist>("cmd_vel", 1);    
 }
 
-// ===================================================================================================
-
 
 class MobotActionServer {
 private:
@@ -155,7 +144,6 @@ private:
     // would need to use: as_.publishFeedback(feedback_); to send incremental feedback to the client
 
 
-
 public:
     MobotActionServer(); //define the body of the constructor outside of class definition
 
@@ -166,81 +154,37 @@ public:
 };
 
 //implementation of the constructor:
-// member initialization list describes how to initialize member as_
-// member as_ will get instantiated with specified node-handle, name by which this server will be known,
-//  a pointer to the function to be executed upon receipt of a goal.
-//  
-// Syntax of naming the function to be invoked: get a pointer to the function, called executeCB, which is a member method
-// of our class exampleActionServer.  Since this is a class method, we need to tell boost::bind that it is a class member,
-// using the "this" keyword.  the _1 argument says that our executeCB takes one argument
-// the final argument  "false" says don't start the server yet.  (We'll do this in the constructor)
-
 MobotActionServer::MobotActionServer() :
-   as_(nh_, "mobot_action", boost::bind(&MobotActionServer::executeCB, this, _1),false) 
-// in the above initialization, we name the server "example_action"
-//  clients will need to refer to this name to connect with this server
-{
+   as_(nh_, "mobot_action", boost::bind(&MobotActionServer::executeCB, this, _1),false) {
     ROS_INFO("in constructor of MobotActionServer...");
     // do any other desired initializations here...specific to your implementation
     do_inits(nh_);
     as_.start(); //start the server running
 }
 
-//executeCB implementation: this is a member method that will get registered with the action server
-// argument type is very long.  Meaning:
-// actionlib is the package for action servers
-// SimpleActionServer is a templated class in this package (defined in the "actionlib" ROS package)
-// <mobot_action_server::demoAction> customizes the simple action server to use our own "action" message 
-// defined in our package, "mobot_action_server", in the subdirectory "action", called "demo.action"
-// The name "demo" is prepended to other message types created automatically during compilation.
-// e.g.,  "demoAction" is auto-generated from (our) base name "demo" and generic name "Action"
 void MobotActionServer::executeCB(const actionlib::SimpleActionServer<mobot_action_server::demoAction>::GoalConstPtr& goal) {
-    g_count++; // keep track of total number of goals serviced since this server was started
-    result_.output = g_count; // we'll use the member variable result_, defined in our class
-    result_.goal_stamp = goal->input;
-
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
     ROS_INFO("MobotActionServer::executeCB activated");
 
-    double spin_angle = goal->angle;
-    double travel_distance = goal->distance;
+    std::vector<double> spin_angle = goal->angle;
+    std::vector<double> travel_distance = goal->distance;
 
-    geometry_msgs::Pose pose_desired;
+    int num_angle = spin_angle.size();
+    for(int i = 0; i < num_angle; i++) { 
+    	ROS_INFO("angle[%d] = %f", i, spin_angle[i]);
+    }
 
-    do_spin(spin_angle); // carry out this incremental action
+    do_spin(spin_angle[0]); // carry out this incremental action
     ros::Rate loop_timer(1/g_sample_dt); 
 
     loop_timer.sleep();
     //do_halt();
 
-    do_move(travel_distance); // carry out this incremental action
+    do_move(travel_distance[0]); // carry out this incremental action
 
     //do_halt();
 
-    ROS_INFO("spin_angle = %f", spin_angle);
-    ROS_INFO("travel_distance = %f", travel_distance);
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-
-
-    // the class owns the action server, so we can use its member methods here
-   
-    // DEBUG: if client and server remain in sync, all is well--else whine and complain and quit
-    // NOTE: this is NOT generically useful code; server should be happy to accept new clients at any time, and
-    // no client should need to know how many goals the server has serviced to date
-    // if (g_count != goal->input) {
-    //     ROS_WARN("hey--mismatch!");
-    //     ROS_INFO("g_count = %d; goal_stamp = %d", g_count, result_.goal_stamp);
-    //     g_count_failure = true; //set a flag to commit suicide
-    //     ROS_WARN("informing client of aborted goal");
-    //     as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
-    // }
-    // else {
-    //      as_.setSucceeded(result_); // tell the client that we were successful acting on the request, and return the "result" message
-    // }
+    ROS_INFO("spin_angle = %f", spin_angle[0]);
+    ROS_INFO("travel_distance = %f", travel_distance[0]);
 
     as_.setSucceeded(result_);
 }
@@ -253,11 +197,9 @@ int main(int argc, char** argv) {
     MobotActionServer as_object; // create an instance of the class "MobotActionServer"
     
     ROS_INFO("going into spin");
-    // from here, all the work is done in the action server, with the interesting stuff done within "executeCB()"
-    // you will see 5 new topics under example_action: cancel, feedback, goal, result, status
+
     while (!g_count_failure) {
         ros::spinOnce(); //normally, can simply do: ros::spin();  
-        // for debug, induce a halt if we ever get our client/server communications out of sync
     }
 
     return 0;
