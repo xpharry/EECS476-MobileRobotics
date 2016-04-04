@@ -1,3 +1,7 @@
+//pub_des_state_path_client:
+// illustrates how to send a request to the append_path_queue_service service
+// this one is a 3mx3m square path
+
 #include <ros/ros.h>
 #include <mobot_pub_des_state/path.h>
 #include <iostream>
@@ -17,7 +21,7 @@ geometry_msgs::Quaternion convertPlanarPhi2Quaternion(double phi) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "my_lin_steering_client");
+    ros::init(argc, argv, "my_lin_steering_console");
     ros::NodeHandle n;
     ros::ServiceClient client = n.serviceClient<mobot_pub_des_state::path>("append_path_queue_service");
     geometry_msgs::Quaternion quat;
