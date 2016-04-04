@@ -21,7 +21,7 @@ geometry_msgs::Quaternion convertPlanarPhi2Quaternion(double phi) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "my_path_client");
+    ros::init(argc, argv, "my_open_loop_console");
     ros::NodeHandle n;
     ros::ServiceClient client = n.serviceClient<mobot_pub_des_state::path>("append_path_queue_service");
     geometry_msgs::Quaternion quat;
