@@ -14,5 +14,9 @@ and linear-steering algorithm.
 `rosrun my_steering_algorithm_console my_steering_algorithm_console`
 `rosrun lin_steering lin_steering_wrt_odom`
 
+or
+
+launch file:
+'roslaunch my_lin_steering_console my_lin_steering_console.launch'
 
     
