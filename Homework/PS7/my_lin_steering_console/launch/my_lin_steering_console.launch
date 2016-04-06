@@ -5,12 +5,12 @@
   <include file="$(find mobot_urdf)/launch/mobot.launch"/>
 
   <!-- load the model "starting_pen" into Gazebo -->
-  <!--<node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find exmpl_models)/starting_pen/model.sdf -sdf -model starting_pen -y -5" />-->
+  <node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find exmpl_models)/starting_pen/model.sdf -sdf -model starting_pen -y -5" />
   
-  <node name="mobot_pub_des_state" pkg="mobot_pub_des_state" type="mobot_pub_des_state"/>
+  <node name="mobot_pub_des_state_startup" pkg="mobot_pub_des_state" type="mobot_pub_des_state_startup"/>
 
   <node name="lin_steering_wrt_odom" pkg="lin_steering" type="lin_steering_wrt_odom"/>
 
-  <node name="my_open_loop_console" pkg="my_open_loop_console" type="my_open_loop_console"/>
+  <!--<node name="my_lin_steering_console" pkg="my_lin_steering_console" type="my_lin_steering_console"/>-->
 
 </launch>
