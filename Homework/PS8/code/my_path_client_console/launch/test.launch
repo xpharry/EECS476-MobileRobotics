@@ -1,0 +1,17 @@
+<launch>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+
+  <include file="$(find mobot_urdf)/launch/mobot_startup_open_loop.launch"/>
+  
+  <!-- find the map -->
+  <arg name="map_file" default="$(find my_map)/my_gmapping.yaml"/>
+
+  <!-- Run the map server -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+  <node name="amcl" pkg="amcl" type="amcl"/>
+
+  <node name="my_open_loop_console" pkg="my_open_loop_console" type="my_open_loop_console"/>
+
+</launch>

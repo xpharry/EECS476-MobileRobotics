@@ -2,9 +2,9 @@
 
 https://youtu.be/blJj9HvjlBc
 
-# my robot moving in known map
+# my robot moving in known map, lin_steering with amcl feedback:
 
-https://youtu.be/WLTDUp6QHRg
+https://youtu.be/-iuHiPGGiBQ
 
 # my robot wandering for gmapping
 

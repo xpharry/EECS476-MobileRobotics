@@ -12,6 +12,6 @@
 
   <node name="amcl" pkg="amcl" type="amcl"/>
 
-  <node name="my_open_loop_console" pkg="my_open_loop_console" type="my_open_loop_console"/>
+  <node name="my_path_client_console" pkg="my_path_client_console" type="my_path_client_console"/>
 
 </launch>

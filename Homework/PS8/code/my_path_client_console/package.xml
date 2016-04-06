@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>my_open_loop_console</name>
+  <name>my_path_client_console</name>
   <version>0.0.0</version>
-  <description>The my_open_loop_console package</description>
+  <description>The my_path_client_console package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
