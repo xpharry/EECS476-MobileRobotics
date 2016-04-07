@@ -7,7 +7,7 @@
 
 
 // this header incorporates all the necessary #include files and defines the class "SteeringController"
-#include "alpha_steering_algorithm_w_amcl.h"
+#include "steering_algorithm.h"
 
 
 SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehandle)
@@ -25,7 +25,7 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
         ros::spinOnce();
     }
     ROS_INFO("constructor: got an odom message");    
-
+    
     tfListener_ = new tf::TransformListener; 
  
     bool tferr=true;
@@ -36,8 +36,7 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
                 //try to lookup transform from target frame "odom" to source frame "map"
             //The direction of the transform returned will be from the target_frame to the source_frame. 
              //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
-		
-               tfListener_->lookupTransform("odom", "map", ros::Time(0), mapToOdom_);
+                tfListener_->lookupTransform("odom", "map", ros::Time(0), mapToOdom_);
             } catch(tf::TransformException &exception) {
                 ROS_ERROR("%s", exception.what());
                 tferr=true;
@@ -48,7 +47,6 @@ SteeringController::SteeringController(ros::NodeHandle* nodehandle):nh_(*nodehan
     ROS_INFO("tf is good");
     // from now on, tfListener will keep track of transforms from map frame to target frame
     
-   
     //initialize desired state, in case this is not yet being published adequately
     des_state_ = current_odom_;  // use the current odom state
     // but make sure the speed/spin commands are set to zero
@@ -111,13 +109,11 @@ void SteeringController::odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     odom_pose_ = odom_rcvd.pose.pose;
     odom_vel_ = odom_rcvd.twist.twist.linear.x;
     odom_omega_ = odom_rcvd.twist.twist.angular.z;
-    odom_x_ = odom_rcvd.pose.pose.position.x + g_mapToOdom.getOrigin().x();
-    odom_y_ = odom_rcvd.pose.pose.position.y + g_mapToOdom.getOrigin().y();
-
-
+    odom_x_ = odom_rcvd.pose.pose.position.x + mapToOdom_.getOrigin().x();
+    odom_y_ = odom_rcvd.pose.pose.position.y + mapToOdom_.getOrigin().y();
     odom_quat_ = odom_rcvd.pose.pose.orientation;
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
-    odom_phi_ = convertPlanarQuat2Phi(odom_quat_) + tf::getYaw(g_mapToOdom.getRotation()); // cheap conversion from quaternion to heading for planar motion
+    odom_phi_ = convertPlanarQuat2Phi(odom_quat_) + tf::getYaw( mapToOdom_.getRotation() ); // cheap conversion from quaternion to heading for planar motion
     // let's put odom x,y in an Eigen-style 2x1 vector; convenient for linear algebra operations
     //odom_xy_vec_(0) = odom_x_;
     //odom_xy_vec_(1) = odom_y_;   
@@ -209,8 +205,8 @@ void SteeringController::lin_steering_algorithm() {
     
     
     // DEBUG OUTPUT...
-    //ROS_INFO("des_state_phi, odom_phi, heading err = %f, %f, %f", des_state_phi_,odom_phi_,heading_err);
-    //ROS_INFO("lateral err, trip dist err = %f, %f",lateral_err,trip_dist_err);
+    ROS_INFO("des_state_phi, odom_phi, heading err = %f, %f, %f", des_state_phi_,odom_phi_,heading_err);
+    ROS_INFO("lateral err, trip dist err = %f, %f",lateral_err,trip_dist_err);
     // DEFINITELY COMMENT OUT ALL cout<< OPERATIONS FOR REAL-TIME CODE
     //std::cout<<des_xy_vec_<<std::endl;
     //std::cout<<odom_xy_vec_<<std::endl;
@@ -230,8 +226,8 @@ void SteeringController::lin_steering_algorithm() {
     controller_omega = des_state_omega_ + K_PHI*heading_err + K_DISP*lateral_err;
     
     controller_omega = MAX_OMEGA*sat(controller_omega/MAX_OMEGA); // saturate omega command at specified limits
-    controller_speed = MAX_SPEED*sat(controller_speed/MAX_SPEED);
-    
+    controller_omega = MAX_OMEGA*sat(controller_speed/MAX_SPEED); 
+
     // send out our very clever speed/spin commands:
     twist_cmd_.linear.x = controller_speed;
     twist_cmd_.angular.z = controller_omega;
@@ -244,7 +240,7 @@ void SteeringController::lin_steering_algorithm() {
 int main(int argc, char** argv) 
 {
     // ROS set-ups:
-    ros::init(argc, argv, "steeringController_amcl"); //node name
+    ros::init(argc, argv, "steeringController"); //node name
 
     ros::NodeHandle nh; // create a node handle; need to pass this to the class constructor
 
@@ -252,42 +248,8 @@ int main(int argc, char** argv)
     SteeringController steeringController(&nh);  //instantiate an ExampleRosClass object and pass in pointer to nodehandle for constructor to use
     ros::Rate sleep_timer(UPDATE_RATE); //a timer for desired rate, e.g. 50Hz
    
-
-	tf::TransformListener listener; 
     ROS_INFO:("starting steering algorithm");
     while (ros::ok()) {
-
-
-	tf::StampedTransform transform; 
- 
-    bool tferr=true;
-    ROS_INFO("waiting for tf...");
-    while (tferr) {
-        tferr=false;
-        try {
-                //try to lookup transform from target frame "odom" to source frame "map"
-            //The direction of the transform returned will be from the target_frame to the source_frame. 
-             //Which if applied to data, will transform data in the source_frame into the target_frame. See tf/CoordinateFrameConventions#Transform_Direction
-		
-               listener.lookupTransform("odom", "map", ros::Time(0), g_mapToOdom);
-            } catch(tf::TransformException &exception) {
-                ROS_ERROR("%s", exception.what());
-                tferr=true;
-                ros::Duration(0.5).sleep(); // sleep for half a second
-                ros::spinOnce();                
-            }   
-    }
-    
-ROS_INFO("odom_x, odom_y, rotation= %f, %f, %f", g_mapToOdom.getOrigin().x(), g_mapToOdom.getOrigin().y(), tf::getYaw(g_mapToOdom.getRotation()));
-    // from now on, tfListener will keep track of transforms from map frame to target frame
-
-
-
-
-
-
-
-
         steeringController.lin_steering_algorithm(); // compute and publish twist commands and cmd_vel and cmd_vel_stamped
 
         ros::spinOnce();

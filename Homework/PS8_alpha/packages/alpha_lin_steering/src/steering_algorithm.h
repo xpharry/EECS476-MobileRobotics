@@ -2,8 +2,8 @@
 // wsn; Feb, 2016
 // include this file in "lin_steering_wrt_odom.cpp"
 
-#ifndef STEERING_ALGORITHM_AMCL_H_
-#define STEERING_ALGORITHM_AMCL_H_
+#ifndef STEERING_ALGORITHM_H_
+#define STEERING_ALGORITHM_H_
 
 //some generically useful stuff to include...
 #include <math.h>
@@ -40,14 +40,13 @@ const double K_TRIP_DIST = 1.0;
 // dynamic limitations:  these apply to the steering controller; they may be larger than the limits on des state generation
 const double MAX_SPEED = 0.5; // m/sec; adjust this
 const double MAX_OMEGA = 0.3; //1.0; // rad/sec; adjust this
-tf::StampedTransform mapToO;
 
 
 // define a class, including a constructor, member variables and member functions
-class SteeringController_amcl
+class SteeringController
 {
 public:
-    SteeringController_amcl(ros::NodeHandle* nodehandle); //"main" will need to instantiate a ROS nodehandle, then pass it to the constructor
+    SteeringController(ros::NodeHandle* nodehandle); //"main" will need to instantiate a ROS nodehandle, then pass it to the constructor
     // may choose to define public methods or public variables, if desired
     void lin_steering_algorithm(); // here is the heart of it...use odom state and desired state to compute twist command, and publish it
     double convertPlanarQuat2Phi(geometry_msgs::Quaternion quaternion);   

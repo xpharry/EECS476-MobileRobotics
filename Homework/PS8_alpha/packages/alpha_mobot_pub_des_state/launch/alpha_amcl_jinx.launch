@@ -2,7 +2,7 @@
 
 	<include file="$(find cwru_base)/launch/start_base.launch"/>
 
-	<node name="alpha_lin_steering_w_amcl" pkg="alpha_lin_steering_w_amcl" " type="alpha_lin_steering_w_amcl" output="screen"/>
+	<node name="alpha_lin_steering_w_amcl" pkg="alpha_lin_steering" type="alpha_lin_steering_w_amcl" output="screen"/>
 
 	<!-- ********** let mobot stop at the oringin ********** -->
 	<node name="alpha_mobot_pub_des_state_startup" pkg="alpha_mobot_pub_des_state" type="alpha_mobot_pub_des_state_startup" output="screen"/>
