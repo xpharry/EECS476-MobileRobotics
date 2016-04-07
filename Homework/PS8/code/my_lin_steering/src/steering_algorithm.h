@@ -48,6 +48,7 @@ class SteeringController
 public:
     SteeringController(ros::NodeHandle* nodehandle); //"main" will need to instantiate a ROS nodehandle, then pass it to the constructor
     // may choose to define public methods or public variables, if desired
+    void transform();
     void lin_steering_algorithm(); // here is the heart of it...use odom state and desired state to compute twist command, and publish it
     double convertPlanarQuat2Phi(geometry_msgs::Quaternion quaternion);   
     double min_dang(double dang);  
@@ -102,7 +103,7 @@ private:
     void initializeSubscribers(); // we will define some helper methods to encapsulate the gory details of initializing subscribers, publishers and services
     void initializePublishers();
     void initializeServices();
- 
+
     void odomCallback(const nav_msgs::Odometry& odom_rcvd);
     void desStateCallback(const nav_msgs::Odometry& des_state_rcvd);    
         
