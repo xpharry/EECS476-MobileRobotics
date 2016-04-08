@@ -1,17 +1,5 @@
-// my_action_server: 2nd version, includes "cancel" and "feedback"
-// expects client to give an integer corresponding to a timer count, in seconds
-// server counts up to this value, provides feedback, and can be cancelled any time
-// re-use the existing action message, although not all fields are needed
-// use request "input" field for timer setting input, 
-// value of "fdbk" will be set to the current time (count-down value)
-// "output" field will contain the final value when the server completes the goal request
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-//the following #include refers to the "action" message defined for this package
-// The action message can be found in: .../my_action_server/action/demo.action
-// Automated header generation creates multiple headers for message I/O
-// These are referred to by the root name (demo) and appended name (Action)
 #include <my_action_server/demoAction.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Twist.h>
@@ -25,7 +13,6 @@ const double g_move_speed = 0.5; // set forward speed to this value, e.g. 1m/s
 const double g_spin_speed = 0.5; // set yaw rate to this value, e.g. 1 rad/s
 const double g_sample_dt = 0.01;
 const double g_dist_tol = 0.01; // 1cm
-ros::Rate loop_timer(1/g_sample_dt);
 const double PI = 3.1415926;
 
 //global variables, including a publisher object
@@ -42,9 +29,6 @@ private:
 
     ros::NodeHandle nh_;  // we'll need a node handle; get one upon instantiation
 
-    // this class will own a "SimpleActionServer" called "as_".
-    // it will communicate using messages defined in my_action_server/action/demo.action
-    // the type "demoAction" is auto-generated from our name "demo" and generic name "Action"
     actionlib::SimpleActionServer<my_action_server::demoAction> as_;
 
     ros::Publisher twist_commander;
@@ -77,16 +61,6 @@ public:
     void preemptCB();
 };
 
-//implementation of the constructor:
-// member initialization list describes how to initialize member as_
-// member as_ will get instantiated with specified node-handle, name by which this server will be known,
-//  a pointer to the function to be executed upon receipt of a goal.
-//  
-// Syntax of naming the function to be invoked: get a pointer to the function, called executeCB, 
-// which is a member method of our class ActionServer.  
-// Since this is a class method, we need to tell boost::bind that it is a class member,
-// using the "this" keyword.  the _1 argument says that our executeCB function takes one argument
-// The final argument,  "false", says don't start the server yet.  (We'll do this in the constructor)
 
 ActionServer::ActionServer() :
    as_(nh_, "my_lidar_mobot_action", false) 
@@ -224,6 +198,7 @@ geometry_msgs::Quaternion ActionServer::convertPlanarPhi2Quaternion(double phi) 
 // a few action functions:
 //a function to reorient by a specified angle (in radians), then halt
 void ActionServer::do_spin(double spin_ang) {
+    ros::Rate loop_timer(1/g_sample_dt);
     double timer=0.0;
     double final_time = fabs(spin_ang)/g_spin_speed;
     g_twist_cmd.angular.z= sgn(spin_ang)*g_spin_speed;
@@ -238,6 +213,7 @@ void ActionServer::do_spin(double spin_ang) {
 //a function to move forward by a specified distance (in meters), then halt
 void ActionServer::do_move(double distance) { // always assumes robot is already oriented properly
                                 // but allow for negative distance to mean move backwards
+    ros::Rate loop_timer(1/g_sample_dt);
     double timer=0.0;
     double final_time = fabs(distance)/g_move_speed;
     g_twist_cmd.angular.z = 0.0; //stop spinning
@@ -250,7 +226,8 @@ void ActionServer::do_move(double distance) { // always assumes robot is already
     do_halt();
 }
 
-void ActionServer::do_halt() {   
+void ActionServer::do_halt() {
+    ros::Rate loop_timer(1/g_sample_dt);
     g_twist_cmd.angular.z= 0.0;
     g_twist_cmd.linear.x=0.0;
     for (int i=0;i<10;i++) {

@@ -7,13 +7,16 @@
 #include <std_msgs/Bool.h>
 
 const double PI = 3.1415926;
+bool is_alldone = 1;
 
 actionlib::SimpleActionClient<mobot_action_server::pathAction> *action_client;
+ros::Subscriber alarm_subscriber;
 
 void doneCb(const actionlib::SimpleClientGoalState& state,
         const mobot_action_server::pathResultConstPtr& result) {
     ROS_INFO(" doneCb: server responded with state [%s]", state.toString().c_str());
-    ROS_INFO(" got result is_halt = %d", result->is_halt.data);
+    ROS_INFO(" got result is_halt = %d", result->is_alldone.data);
+    is_alldone = result->is_alldone.data;
 }
 
 void activeCb() {
@@ -47,11 +50,11 @@ void alarmCallback(const std_msgs::Bool& alarm_msg) {
         std::vector<geometry_msgs::PoseStamped> poses(1);
         poses.at(0).pose.position.x = 0;
         poses.at(0).pose.position.y = 0;
-        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI/2);
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI/4);
 
-        goal.path.poses = poses; 
+        goal.path.poses = poses;
         action_client->sendGoal(goal);
-        action_client->waitForResult(); // wait forever... 
+        // action_client->waitForResult(); // wait forever... 
     }
 }
 
@@ -59,7 +62,7 @@ int main(int argc, char** argv) {
         ros::init(argc, argv, "path_action_client_node"); // name this node
         ros::NodeHandle nh;
 
-        ros::Subscriber alarm_subscriber = nh.subscribe("/lidar_alarm", 1, alarmCallback);
+        alarm_subscriber = nh.subscribe("/lidar_alarm", 1, alarmCallback);
 
         // here is a "goal" object compatible with the server, as defined in mobot_action_server/action
         mobot_action_server::pathGoal goal; 
@@ -83,34 +86,31 @@ int main(int argc, char** argv) {
         ROS_INFO("connected to action server");  // if here, then we connected to the server;
 
         while(true) {
-            ros::spinOnce();
-            
             // stuff a goal message:
             geometry_msgs::Quaternion quat;
             quat = convertPlanarPhi2Quaternion(0);
             std::vector<geometry_msgs::PoseStamped> poses(4);
 
             poses.at(0).pose.position.x = 0;
-            poses.at(0).pose.position.y = 1;
+            poses.at(0).pose.position.y = 3;
             poses.at(0).pose.orientation = quat;
 
             poses.at(1).pose.position.x = 0;
-            poses.at(1).pose.position.y = 2;
+            poses.at(1).pose.position.y = 3;
 
             poses.at(2).pose.position.x = 0;
             poses.at(2).pose.position.y = 3;
 
             poses.at(3).pose.position.x = 0;
-            poses.at(3).pose.position.y = 4;
+            poses.at(3).pose.position.y = 3;
 
             goal.path.poses = poses;
             // action_client->sendGoal(goal);
             action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
-            action_client->waitForResult(); // wait forever... 
+            // action_client->waitForResult(); // wait forever... 
 
             ros::spinOnce();
-
-            // ros::Duration(0.5).sleep();
+            ros::Duration(15).sleep();
         }
 
     return 0;

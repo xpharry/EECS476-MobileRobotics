@@ -85,10 +85,10 @@ void MobotActionServer::executeCB(const actionlib::SimpleActionServer<mobot_acti
     for (int i = 0; i < npts; i++) { //visit each subgoal
        // each iteration, check if cancellation has been ordered
         if (as_.isPreemptRequested()){ 
-          ROS_WARN("goal cancelled!");
-          result_.is_halt.data = true;
-          as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
-          return; // done with callback
+            ROS_WARN("goal cancelled!");
+            result_.is_alldone.data = false;
+            as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
+            return; // done with callback
         }
         // odd notation: drill down, access vector element, drill some more to get pose
         pose_desired = path.poses[i].pose; //get first pose from vector of poses
@@ -112,7 +112,7 @@ void MobotActionServer::executeCB(const actionlib::SimpleActionServer<mobot_acti
         timer.sleep();      
     }
     // ***************************************************
-    result_.is_halt.data = false; //value should be zero, if completed countdown
+    result_.is_alldone.data = true; //value should be zero, if completed countdown
     as_.setSucceeded(result_); // return the "result" message to client, along with "success" status
 }
 
@@ -194,7 +194,7 @@ void MobotActionServer::do_halt() {
 }
 
 void MobotActionServer::do_inits(ros::NodeHandle &n) {
-  //initialize components of the twist command global variable
+    //initialize components of the twist command global variable
     twist_cmd_.linear.x = 0.0;
     twist_cmd_.linear.y = 0.0;    
     twist_cmd_.linear.z = 0.0;

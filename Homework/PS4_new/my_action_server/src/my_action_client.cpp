@@ -89,16 +89,6 @@ void ActionClient::commandSquarePath() {
     path.poses = poses;
     goal_.path = path; // this merely sequentially numbers the goals sent
     ac_.sendGoal(goal_, boost::bind(&ActionClient::actionDoneCb, this, _1, _2)); // simple example--send goal, but do not specify callbacks
-    //ac_.sendGoal(goal_,&ActionClient::actionDoneCb); // we could also name additional callback functions here, if desired
-    //    ac_.sendGoal(goal, &doneCb, &activeCb, &feedbackCb); //e.g., like this
-    ac_.waitForResult();
-    // bool finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
-    // //bool finished_before_timeout = action_client.waitForResult(); // wait forever...
-    // while (!finished_before_timeout) {
-    //     ROS_WARN("giving up waiting for commandSquarePath ... ");
-    //     finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
-    // }
-    // ROS_INFO("commandSquarePath sent... ");
 }
 
 
@@ -108,30 +98,15 @@ void ActionClient::alarmCallback(const std_msgs::Bool& alarm_msg) {
     if (g_lidar_alarm) {
         ROS_INFO("LIDAR alarm received!");
         ac_.cancelGoal();
-        std::vector<geometry_msgs::PoseStamped> poses(1);
-        // poses.at(0).pose.position.x = 0;
-        // poses.at(0).pose.position.y = 0;
-        // poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(0);
-        // ac_.sendGoal(goal_);      
-        // goal_.path.poses = poses; // this merely sequentially numbers the goals sent
-        // ac_.waitForResult(); // wait forever...
-        
-        // bool finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
-        // //bool finished_before_timeout = action_client.waitForResult(); // wait forever...
-        // while (!finished_before_timeout) {
-        //     ROS_WARN("giving up waiting for cancelGoal ... ");
-        //     finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
-        // }
 
         ROS_INFO("turning around!");
         //commandSquarePath();
-        //std::vector<geometry_msgs::PoseStamped> poses(1);
+        std::vector<geometry_msgs::PoseStamped> poses(1);
         poses.at(0).pose.position.x = 0;
         poses.at(0).pose.position.y = 0;
-        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(1.57);
-        ac_.sendGoal(goal_);      
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(1.57);      
         goal_.path.poses = poses; // this merely sequentially numbers the goals sent
-        ac_.waitForResult(); // wait forever... 
+        ac_.sendGoal(goal_); 
     }
 }
 
@@ -157,6 +132,7 @@ int main(int argc, char** argv) {
     while(ros::ok()) {
         ac_object.commandSquarePath();
         ros::spinOnce();
+        ros::Duration(15).sleep();
     }
 
     return 0;

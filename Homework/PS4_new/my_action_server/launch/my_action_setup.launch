@@ -8,9 +8,9 @@
 	<!-- load the model "starting_pen" into Gazebo -->
 	<node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find exmpl_models)/starting_pen/model.sdf -sdf -model starting_pen -y -5" />
 
-    <node name="my_lidar_alarm" pkg="my_lidar_alarm" type="my_lidar_alarm" output="screen">
+    <node name="mobot_lidar_alarm" pkg="mobot_lidar_alarm" type="mobot_lidar_alarm" output="screen">
     	<remap from="scan" to="scan"/>
-   	</node>  
+	</node>   
 
     <!-- start your action server -->
     <node name="my_action_server" pkg="my_action_server" type="my_action_server" output="screen"/>
