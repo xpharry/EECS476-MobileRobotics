@@ -1,0 +1,11 @@
+#goal definition
+#the lines with the hash signs are merely comments
+#goal, result and feedback are defined by this fixed order, and separated by 3 hyphens
+nav_msgs/Path path
+---
+#result definition
+std_msgs/Bool is_halt
+---
+#feedback
+geometry_msgs/Pose des_pose
+std_msgs/Bool is_finished

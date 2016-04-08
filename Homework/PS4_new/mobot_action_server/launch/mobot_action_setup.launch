@@ -1,0 +1,21 @@
+<launch>
+
+	<!-- start up the simulator -->
+  
+	<include file="$(find gazebo_ros)/launch/empty_world.launch"/>
+	<include file="$(find mobot_urdf)/launch/mobot_w_lidar.launch"/>   
+
+	<!-- load the model "starting_pen" into Gazebo -->
+	<node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find exmpl_models)/starting_pen/model.sdf -sdf -model starting_pen -y -5" />
+
+    <node name="my_lidar_alarm" pkg="my_lidar_alarm" type="my_lidar_alarm" output="screen">
+    	<remap from="scan" to="scan"/>
+   	</node>  
+
+    <!-- start your action server -->
+    <!--<node name="mobot_action_server" pkg="mobot_action_server" type="mobot_action_server" output="screen"/>-->
+
+    <!-- start your action client --> 
+    <!--<node name="mobot_action_client" pkg="mobot_action_server" type="mobot_action_client" output="screen"/>-->
+
+</launch>
