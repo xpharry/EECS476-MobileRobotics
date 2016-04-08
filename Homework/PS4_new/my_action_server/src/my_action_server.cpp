@@ -21,11 +21,11 @@ using namespace std;
 
 
 //some tunable constants, global
-const double g_move_speed = 1.0; // set forward speed to this value, e.g. 1m/s
+const double g_move_speed = 0.5; // set forward speed to this value, e.g. 1m/s
 const double g_spin_speed = 0.5; // set yaw rate to this value, e.g. 1 rad/s
 const double g_sample_dt = 0.01;
 const double g_dist_tol = 0.01; // 1cm
-
+ros::Rate loop_timer(1/g_sample_dt);
 const double PI = 3.1415926;
 
 //global variables, including a publisher object
@@ -132,6 +132,7 @@ void ActionServer::executeCB() {
         spin_angle = min_spin(spin_angle);// but what if this angle is > pi?  then go the other way
         ROS_INFO("---------------------- spin angle: %f ----------------", spin_angle);
         do_spin(spin_angle); // carry out this incremental action
+
         // we will just assume that this action was successful--really should have sensor feedback here
         g_current_pose.position = pose_desired.position;
         g_current_pose.orientation = pose_desired.orientation; // assumes got to desired orientation precisely
@@ -180,7 +181,7 @@ void ActionServer::doInit() {
     g_current_pose.orientation.z = 0.0;
     g_current_pose.orientation.w = 1.0;
 
-    g_twist_commander.publish(twist_cmd);
+    // g_twist_commander.publish(twist_cmd);
 }
 
 
@@ -223,13 +224,12 @@ geometry_msgs::Quaternion ActionServer::convertPlanarPhi2Quaternion(double phi) 
 // a few action functions:
 //a function to reorient by a specified angle (in radians), then halt
 void ActionServer::do_spin(double spin_ang) {
-    ros::Rate loop_timer(1/g_sample_dt);
     double timer=0.0;
     double final_time = fabs(spin_ang)/g_spin_speed;
     g_twist_cmd.angular.z= sgn(spin_ang)*g_spin_speed;
     while(timer<final_time) {
         g_twist_commander.publish(g_twist_cmd);
-        timer+=g_sample_dt;
+        timer += g_sample_dt;
         loop_timer.sleep(); 
     }  
     do_halt(); 
@@ -238,21 +238,19 @@ void ActionServer::do_spin(double spin_ang) {
 //a function to move forward by a specified distance (in meters), then halt
 void ActionServer::do_move(double distance) { // always assumes robot is already oriented properly
                                 // but allow for negative distance to mean move backwards
-    ros::Rate loop_timer(1/g_sample_dt);
     double timer=0.0;
     double final_time = fabs(distance)/g_move_speed;
     g_twist_cmd.angular.z = 0.0; //stop spinning
     g_twist_cmd.linear.x = sgn(distance)*g_move_speed;
     while(timer<final_time) {
         g_twist_commander.publish(g_twist_cmd);
-        timer+=g_sample_dt;
+        timer += g_sample_dt;
         loop_timer.sleep(); 
     }  
     do_halt();
 }
 
-void ActionServer::do_halt() {
-    ros::Rate loop_timer(1/g_sample_dt);   
+void ActionServer::do_halt() {   
     g_twist_cmd.angular.z= 0.0;
     g_twist_cmd.linear.x=0.0;
     for (int i=0;i<10;i++) {
@@ -267,8 +265,6 @@ void ActionServer::get_yaw_and_dist(geometry_msgs::Pose current_pose, geometry_m
 
     double x_diff = goal_pose.position.x - current_pose.position.x;
     double y_diff = goal_pose.position.y - current_pose.position.y;
-    dist = sqrt( x_diff*x_diff + y_diff*y_diff );
-    ROS_INFO("+++++++++++++++++++ current distance: %f ++++++++++++++++++++++", dist);
     if(dist < g_dist_tol) { //too small of a motion, so just set the heading from goal heading
         heading = convertPlanarQuat2Phi(goal_pose.orientation); 
     }
@@ -276,6 +272,9 @@ void ActionServer::get_yaw_and_dist(geometry_msgs::Pose current_pose, geometry_m
         heading = atan2(y_diff, x_diff);
     }
     ROS_INFO("+++++++++++++++++++ current heading: %f ++++++++++++++++++++++", heading);
+
+    dist = sqrt( x_diff*x_diff + y_diff*y_diff );
+    ROS_INFO("+++++++++++++++++++ current distance: %f ++++++++++++++++++++++", dist);
 }
 
 

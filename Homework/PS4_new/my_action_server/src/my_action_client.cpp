@@ -41,20 +41,19 @@ ActionClient::ActionClient() : ac_(nh_, "my_lidar_mobot_action", true) {
     // do any other desired initializations here...specific to your implementation
     alarm_subscriber = nh_.subscribe("lidar_alarm",1,&ActionClient::alarmCallback,this);
     connectToServer();
-    commandSquarePath();
 }
 
 
 void ActionClient::connectToServer() {
     // attempt to connect to the server:
     ROS_INFO("waiting for server: ");
-    bool server_exists = ac_.waitForServer(ros::Duration(10.0)); // wait for up to 5 seconds
+    bool server_exists = ac_.waitForServer(ros::Duration(5.0)); // wait for up to 5 seconds
     // something odd in above: does not seem to wait for 5 seconds, but returns rapidly if server not running
     //bool server_exists = ac_.waitForServer(); //wait forever
 
-    if (!server_exists) {
+    while (!server_exists) {
         ROS_WARN("could not connect to server; halting");
-        return; // bail out; optionally, could print a warning message and retry
+        server_exists = ac_.waitForServer(ros::Duration(5.0));
     }
     
     ROS_INFO("connected to action server");  // if here, then we connected to the server;
@@ -74,46 +73,65 @@ void ActionClient::commandSquarePath() {
     quat = convertPlanarPhi2Quaternion(0);
     std::vector<geometry_msgs::PoseStamped> poses(4);
 
-    poses.at(0).pose.position.x = 5;
-    poses.at(0).pose.position.y = 0;
+    poses.at(0).pose.position.x = 0;
+    poses.at(0).pose.position.y = 1;
     poses.at(0).pose.orientation = quat;
 
-    poses.at(1).pose.position.x = 5;
-    poses.at(1).pose.position.y = 5;
+    poses.at(1).pose.position.x = 0;
+    poses.at(1).pose.position.y = 2;
 
     poses.at(2).pose.position.x = 0;
-    poses.at(2).pose.position.y = 5;
+    poses.at(2).pose.position.y = 3;
 
     poses.at(3).pose.position.x = 0;
-    poses.at(3).pose.position.y = 0;
+    poses.at(3).pose.position.y = 4;
 
     path.poses = poses;
     goal_.path = path; // this merely sequentially numbers the goals sent
     ac_.sendGoal(goal_, boost::bind(&ActionClient::actionDoneCb, this, _1, _2)); // simple example--send goal, but do not specify callbacks
     //ac_.sendGoal(goal_,&ActionClient::actionDoneCb); // we could also name additional callback functions here, if desired
     //    ac_.sendGoal(goal, &doneCb, &activeCb, &feedbackCb); //e.g., like this
-
     ac_.waitForResult();
+    // bool finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
+    // //bool finished_before_timeout = action_client.waitForResult(); // wait forever...
+    // while (!finished_before_timeout) {
+    //     ROS_WARN("giving up waiting for commandSquarePath ... ");
+    //     finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
+    // }
+    // ROS_INFO("commandSquarePath sent... ");
 }
 
 
 void ActionClient::alarmCallback(const std_msgs::Bool& alarm_msg) { 
     g_lidar_alarm = alarm_msg.data; //make the alarm status global, so main() can use it
+    ROS_INFO("LIDAR alarm = %d", g_lidar_alarm);
     if (g_lidar_alarm) {
         ROS_INFO("LIDAR alarm received!");
         ac_.cancelGoal();
-        //ac_.waitForResult(); // wait forever...
-
-        ROS_INFO("sending new goals!");
-        nav_msgs::Path path;
-        geometry_msgs::Quaternion quat;
-        quat = convertPlanarPhi2Quaternion(PI/2);
         std::vector<geometry_msgs::PoseStamped> poses(1);
-        poses.at(0).pose.orientation = quat;
-        path.poses = poses;
-        goal_.path = path;
-        ac_.sendGoal(goal_, boost::bind(&ActionClient::actionDoneCb, this, _1, _2));
-        ac_.waitForResult(); // wait forever...        
+        // poses.at(0).pose.position.x = 0;
+        // poses.at(0).pose.position.y = 0;
+        // poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(0);
+        // ac_.sendGoal(goal_);      
+        // goal_.path.poses = poses; // this merely sequentially numbers the goals sent
+        // ac_.waitForResult(); // wait forever...
+        
+        // bool finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
+        // //bool finished_before_timeout = action_client.waitForResult(); // wait forever...
+        // while (!finished_before_timeout) {
+        //     ROS_WARN("giving up waiting for cancelGoal ... ");
+        //     finished_before_timeout = ac_.waitForResult(ros::Duration(5.0));
+        // }
+
+        ROS_INFO("turning around!");
+        //commandSquarePath();
+        //std::vector<geometry_msgs::PoseStamped> poses(1);
+        poses.at(0).pose.position.x = 0;
+        poses.at(0).pose.position.y = 0;
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(1.57);
+        ac_.sendGoal(goal_);      
+        goal_.path.poses = poses; // this merely sequentially numbers the goals sent
+        ac_.waitForResult(); // wait forever... 
     }
 }
 
@@ -136,7 +154,10 @@ int main(int argc, char** argv) {
     
     ROS_INFO("going into spin");
 
-    ros::spin();
+    while(ros::ok()) {
+        ac_object.commandSquarePath();
+        ros::spinOnce();
+    }
 
     return 0;
 }
