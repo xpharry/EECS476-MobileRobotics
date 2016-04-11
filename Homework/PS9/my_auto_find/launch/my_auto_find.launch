@@ -1,0 +1,9 @@
+<launch>
+
+	<node name="display_pcd_file" pkg="pcl_utils" type="display_pcd_file"/>
+
+	<node name="find_plane_pcd_file" pkg="pcl_utils" type="find_plane_pcd_file" />
+
+	<node name="rviz" pkg="rviz" type="rviz"/>
+
+</launch>
