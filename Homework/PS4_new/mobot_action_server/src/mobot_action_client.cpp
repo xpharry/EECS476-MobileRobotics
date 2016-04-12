@@ -50,11 +50,29 @@ void alarmCallback(const std_msgs::Bool& alarm_msg) {
         std::vector<geometry_msgs::PoseStamped> poses(1);
         poses.at(0).pose.position.x = 0;
         poses.at(0).pose.position.y = 0;
-        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI/4);
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI/2);
 
         goal.path.poses = poses;
         action_client->sendGoal(goal);
         // action_client->waitForResult(); // wait forever... 
+
+        poses.resize(4);
+
+        poses.at(0).pose.position.x = 0;
+        poses.at(0).pose.position.y = 3;
+
+        poses.at(1).pose.position.x = 0;
+        poses.at(1).pose.position.y = 3;
+
+        poses.at(2).pose.position.x = 0;
+        poses.at(2).pose.position.y = 3;
+
+        poses.at(3).pose.position.x = 0;
+        poses.at(3).pose.position.y = 3;
+
+        goal.path.poses = poses;
+        // action_client->sendGoal(goal);
+        action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
     }
 }
 
@@ -85,33 +103,30 @@ int main(int argc, char** argv) {
        
         ROS_INFO("connected to action server");  // if here, then we connected to the server;
 
-        while(true) {
-            // stuff a goal message:
-            geometry_msgs::Quaternion quat;
-            quat = convertPlanarPhi2Quaternion(0);
-            std::vector<geometry_msgs::PoseStamped> poses(4);
+        // stuff a goal message:
+        geometry_msgs::Quaternion quat;
+        quat = convertPlanarPhi2Quaternion(0);
+        std::vector<geometry_msgs::PoseStamped> poses(4);
 
-            poses.at(0).pose.position.x = 0;
-            poses.at(0).pose.position.y = 3;
-            poses.at(0).pose.orientation = quat;
+        poses.at(0).pose.position.x = 0;
+        poses.at(0).pose.position.y = 3;
+        poses.at(0).pose.orientation = quat;
 
-            poses.at(1).pose.position.x = 0;
-            poses.at(1).pose.position.y = 3;
+        poses.at(1).pose.position.x = 0;
+        poses.at(1).pose.position.y = 3;
 
-            poses.at(2).pose.position.x = 0;
-            poses.at(2).pose.position.y = 3;
+        poses.at(2).pose.position.x = 0;
+        poses.at(2).pose.position.y = 3;
 
-            poses.at(3).pose.position.x = 0;
-            poses.at(3).pose.position.y = 3;
+        poses.at(3).pose.position.x = 0;
+        poses.at(3).pose.position.y = 3;
 
-            goal.path.poses = poses;
-            // action_client->sendGoal(goal);
-            action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
-            // action_client->waitForResult(); // wait forever... 
+        goal.path.poses = poses;
+        // action_client->sendGoal(goal);
+        action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
+        // action_client->waitForResult(); // wait forever... 
 
-            ros::spinOnce();
-            ros::Duration(15).sleep();
-        }
+        ros::spin();
 
     return 0;
 }

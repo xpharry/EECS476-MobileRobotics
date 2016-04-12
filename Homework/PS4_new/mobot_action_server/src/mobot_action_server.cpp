@@ -13,7 +13,7 @@ using namespace std;
 //some tunable constants, global
 const double g_move_speed = 1.0; // set forward speed to this value, e.g. 1m/s
 const double g_spin_speed = 1.0; // set yaw rate to this value, e.g. 1 rad/s
-const double g_sample_dt = 0.01;
+const double g_sample_dt = 0.1;
 const double g_dist_tol = 0.01; // 1cm
 const double PI = 3.1415926;
 
@@ -87,6 +87,7 @@ void MobotActionServer::executeCB(const actionlib::SimpleActionServer<mobot_acti
         if (as_.isPreemptRequested()){ 
             ROS_WARN("goal cancelled!");
             result_.is_alldone.data = false;
+            do_halt();
             as_.setAborted(result_); // tell the client we have given up on this goal; send the result message as well
             return; // done with callback
         }
@@ -97,6 +98,8 @@ void MobotActionServer::executeCB(const actionlib::SimpleActionServer<mobot_acti
         as_.publishFeedback(feedback_); // send feedback to the action client that requested this goal
 
         get_yaw_and_dist(current_pose_, pose_desired, travel_distance, spin_angle);
+
+        do_halt();
 
         spin_angle = min_spin(spin_angle);// but what if this angle is > pi?  then go the other way
         do_spin(spin_angle); // carry out this incremental action
@@ -218,8 +221,8 @@ void MobotActionServer::do_inits(ros::NodeHandle &n) {
 
 
 void MobotActionServer::get_yaw_and_dist(geometry_msgs::Pose current_pose, geometry_msgs::Pose goal_pose, double &dist, double &heading) {
-    double x_diff = goal_pose.position.x - current_pose.position.x;
-    double y_diff = goal_pose.position.y - current_pose.position.y;
+    double x_diff = goal_pose.position.x;// - current_pose.position.x;
+    double y_diff = goal_pose.position.y;// - current_pose.position.y;
     if(dist < g_dist_tol) { //too small of a motion, so just set the heading from goal heading
         heading = convertPlanarQuat2Phi(goal_pose.orientation); 
     }
