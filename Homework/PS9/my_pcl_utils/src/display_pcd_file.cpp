@@ -2,7 +2,7 @@
 // prompts for a pcd file name, reads the file, and displays to rviz on topic "pcd"
 //wsn March 2016
 
-#include<ros/ros.h> //generic C++ stuff
+#include <ros/ros.h> //generic C++ stuff
 #include <stdlib.h>
 #include <math.h>
 #include <sensor_msgs/PointCloud2.h> //useful ROS message types
@@ -21,32 +21,40 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh; 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>); //pointer for color version of pointcloud
 
-    cout<<"enter pcd file name: ";
-    string fname;
-    cin>>fname;
-    
-    if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (fname, *pcl_clr_ptr) == -1) //* load the file
-  {
-    ROS_ERROR ("Couldn't read file \n");
-    return (-1);
-  }
-  std::cout << "Loaded "
-            << pcl_clr_ptr->width * pcl_clr_ptr->height
-            << " data points from file "<<fname<<std::endl;
+    // get the filename
+    string fname = "/home/peng/ros_ws/src/student_code/PS9/my_pcd_images/coke_can.pcd";
+    if (argc) {
+        fname = argv[1];
+        ROS_INFO_STREAM("using fname passed in: " << fname);
+    }
+    else {
+        ROS_INFO_STREAM("using default fname: " << fname);
+    }
 
-   //publish the point cloud in a ROS-compatible message; here's a publisher:
+    if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (fname, *pcl_clr_ptr) == -1) { //* load the file
+        ROS_ERROR ("Couldn't read file \n");
+        return (-1);
+    }
+    std::cout << "Loaded "
+        << pcl_clr_ptr->width * pcl_clr_ptr->height
+        << " data points from file "
+        << fname
+        << std::endl;
+
+    //publish the point cloud in a ROS-compatible message; here's a publisher:
     ros::Publisher pubCloud = nh.advertise<sensor_msgs::PointCloud2> ("/pcd", 1);
     sensor_msgs::PointCloud2 ros_cloud;  //here is the ROS-compatible message
     pcl::toROSMsg(*pcl_clr_ptr, ros_cloud); //convert from PCL to ROS type this way
     ros_cloud.header.frame_id = "camera_depth_optical_frame";
     cout << "view in rviz; choose: topic= pcd; and fixed frame= camera_depth_optical_frame" << endl;
+
     //publish the ROS-type message on topic "/ellipse"; can view this in rviz
     while (ros::ok()) {
-
         pubCloud.publish(ros_cloud);
         ros::spinOnce();
         ros::Duration(0.1).sleep();
     }
+
     return 0;
 }
     

@@ -1,4 +1,4 @@
-# pcl_utils
+# my_pcl_utils
 This package contains some examples of using PCL.  
 make_and_display_ellipse shows how to manually populate a point-cloud object, convert the PCL object to a ROS pointCloud message, and publish this message, viewable by Rviz.
 

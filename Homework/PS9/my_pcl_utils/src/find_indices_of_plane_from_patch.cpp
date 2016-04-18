@@ -9,7 +9,7 @@
 
 //wsn March 2016
 
-#include<ros/ros.h> 
+#include <ros/ros.h> 
 #include <stdlib.h>
 #include <math.h>
 
@@ -29,7 +29,7 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h> 
 
-#include <pcl_utils/pcl_utils.h>  //a local library with some utility fncs
+#include <my_pcl_utils/my_pcl_utils.h>  //a local library with some utility fncs
 
 
 using namespace std;
