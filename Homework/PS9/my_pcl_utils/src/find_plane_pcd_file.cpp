@@ -168,9 +168,13 @@ int main(int argc, char** argv) {
     Eigen::Affine3f A = pclUtils.make_affine_from_plane_params(plane_normal, plane_dist);
 
     // get the transformed point cloud
-    pclUtils.transform_kinect_cloud(A);
+    ROS_INFO("transform cloud");
+    // pclUtils.transform_kinect_cloud(A);
+    // pclUtils.transform_cloud(A, pclKinect_clr_ptr, pclTransformedKinetct_clr_ptr);
     // pclUtils.transform_cloud(A, pclGrasped_clr_ptr, pclTransformedGrasped_clr_ptr);
     pclUtils.transform_cloud(A, pclStool_clr_ptr, pclTransformedStool_clr_ptr);
+
+    // check points info
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclTransformedStool_ptr(new pcl::PointCloud<pcl::PointXYZ>);
 
