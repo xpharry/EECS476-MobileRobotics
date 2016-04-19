@@ -124,14 +124,20 @@ int main(int argc, char** argv) {
     ros::Publisher graspedCloud = nh.advertise<sensor_msgs::PointCloud2> ("/graspedCloud", 1);
     ros::Publisher stoolCloud = nh.advertise<sensor_msgs::PointCloud2> ("/stoolCloud", 1);
     ros::Publisher canCloud = nh.advertise<sensor_msgs::PointCloud2> ("/canCloud", 1);
+    ros::Publisher planeCloud = nh.advertise<sensor_msgs::PointCloud2> ("/planeCloud", 1);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclGrasped_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclStool_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclCan_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclTransformedGrasped_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclTransformedStool_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclTransformedCan_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+
     sensor_msgs::PointCloud2 grasped_cloud; //here are ROS-compatible messages
     sensor_msgs::PointCloud2 stool_cloud; //here are ROS-compatible messages
     sensor_msgs::PointCloud2 can_cloud; //here are ROS-compatible messages
+    sensor_msgs::PointCloud2 plane_cloud; //here are ROS-compatible messages
 
     // grasp points by color
     // Eigen::Vector3i color;
@@ -158,8 +164,36 @@ int main(int argc, char** argv) {
     cout << "corresponding evec (est plane normal): " <<plane_normal.transpose() <<endl;
     cout << "est plane distance from origin = " << plane_dist << endl;
 
+    // compute the transformation matrix
+    Eigen::Affine3f A = pclUtils.make_affine_from_plane_params(plane_normal, plane_dist);
+
+    // get the transformed point cloud
+    pclUtils.transform_kinect_cloud(A);
+    // pclUtils.transform_cloud(A, pclGrasped_clr_ptr, pclTransformedGrasped_clr_ptr);
+    pclUtils.transform_cloud(A, pclStool_clr_ptr, pclTransformedStool_clr_ptr);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pclTransformedStool_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pclUtils.downgradeCloud(pclTransformedStool_clr_ptr, pclTransformedStool_ptr);
+    Eigen::Vector3f xformed_stool_centroid = pclUtils.compute_centroid(pclTransformedStool_ptr);
+
+    // compute the height of the camera
+    double plane_height = -0.3;
+    double z_eps = 0.01;
+
+    pclUtils.find_coplanar_pts_z_height(plane_height, z_eps, indices);
+    // pclUtils.copy_indexed_pts_to_output_cloud(indices, planeCloud);
+    pclUtils.copy_cloud_xyzrgb_indices(pclKinect_clr_ptr, indices, plane_pts_ptr);
+    pcl::toROSMsg(*plane_pts_ptr, ros_planar_cloud); //convert from PCL cloud to ROS message this way
+
+    // pcl::PointXYZRGB camera_point, xformed_camera_point;
+    // camera_point.getVector3fMap() <<< 0,0,0;
+    // xformed_camera_point = A * camera_point.getVector3fMap();
+    cout << "the height to the plane of stool is: " << 0 - xformed_stool_centroid[2];
+
     // detect the coke can
     pclUtils.detectCan(pclGrasped_clr_ptr, pclCan_clr_ptr);
+    // pclUtils.transform_cloud(A, pclCan_clr_ptr, pclTransformedCan_clr_ptr);
     pcl::toROSMsg(*pclCan_clr_ptr, can_cloud); //convert from PCL cloud to ROS message this way
 
     // compute the coordinate of the can top
