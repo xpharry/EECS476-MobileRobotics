@@ -168,7 +168,13 @@ int main(int argc, char** argv) {
 
     pclUtils.downgradeCloud(pclCan_clr_ptr, pclCan_ptr);
     can_top = pclUtils.compute_centroid(pclCan_ptr);
-    cout<<"can_top coordinate: "<<can_top.transpose()<<endl;
+    cout << "can_top coordinate: " << can_top.transpose() << endl;
+
+    Eigen::Affine3f A = pclUtils.make_affine_from_plane_params(plane_normal, plane_dist);
+    Eigen::Vector3f transformed_can_top = A * can_top;
+    cout << "transformed can_top coordinate: " << transformed_can_top.transpose() << endl;
+
+    cout << "the camera height to the can_top is approximately " << 0-transformed_can_top[2] << " meters" << endl;
 
     while (ros::ok()) {
         pubCloud.publish(ros_cloud); // will not need to keep republishing if display setting is persistent

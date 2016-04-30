@@ -895,7 +895,7 @@ void PclUtils::graspPointsByColor(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, 
     outputCloud->points.resize(0);
     for (int i = 0; i < npts; ++i) {
         pcl::PointXYZRGB point = inputCloud->points[i];
-        if( compareColor(color, point.getRGBVector3i()) < 0.01 ) {
+        if( compareColor(color, point.getRGBVector3i()) < 0.02 ) {
             // ROS_INFO("same color ... add in ...");
             outputCloud->points.push_back(point);
         }
@@ -955,7 +955,7 @@ void PclUtils::graspPointsBySpace(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, 
 
     outputCloud->width = outputCloud->points.size();
     outputCloud->height = 1;
-    ROS_INFO("grasp done");
+    ROS_INFO("grasped %d points", npts);
 }
 
 void PclUtils::detectStool(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, PointCloud<pcl::PointXYZRGB>::Ptr outputCloud) {
@@ -993,7 +993,7 @@ void PclUtils::detectStool(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, PointCl
     graspPointsBySpace(inputCloud, mediumCloud, lower_limit, upper_limit);
     graspPointsByColor(mediumCloud, outputCloud, color);
 
-    ROS_INFO("stool detected");
+    ROS_INFO("stool detected, %d points", (int)outputCloud->points.size());
 }
 
 void PclUtils::detectCan(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, PointCloud<pcl::PointXYZRGB>::Ptr outputCloud) {
@@ -1022,16 +1022,16 @@ void PclUtils::detectCan(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, PointClou
 
     PointCloud<pcl::PointXYZRGB>::Ptr mediumCloud(new PointCloud<pcl::PointXYZRGB>);
     Eigen::Vector3i color;
-    color << 254, 254, 254;
+    color << 160, 35, 60;
     Eigen::Vector3f lower_limit;
     Eigen::Vector3f upper_limit;
-    lower_limit << 0, 0, 0.5;
-    upper_limit << 0.1, 0.1, 0.7;
+    lower_limit << -0.1, -0.1, 0.5;
+    upper_limit << 0.3, 0.3, 0.8;
 
     graspPointsBySpace(inputCloud, mediumCloud, lower_limit, upper_limit);
     graspPointsByColor(mediumCloud, outputCloud, color);
 
-    ROS_INFO("coke can top detected");
+    ROS_INFO("coke can top detected, %d points", (int)outputCloud->points.size());
 }
 
 void PclUtils::downgradeCloud(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, PointCloud<pcl::PointXYZ>::Ptr outputCloud) {
