@@ -6,7 +6,7 @@
 #include <std_msgs/Bool.h> // boolean message 
 #include <math.h>
 
-const double MIN_SAFE_DISTANCE = 1; // set alarm if anything is within 0.5m of the front of robot
+const double MIN_SAFE_DISTANCE = 1.2; // set alarm if anything is within 0.5m of the front of robot
 
 // these values to be set within the laser callback
 float ping_dist_in_front_=3.0; // global var to hold length of a SINGLE LIDAR ping--in front
@@ -20,7 +20,7 @@ double range_min_ = 0.0;
 double range_max_ = 0.0;
 bool laser_alarm_=false;
 double scan_width_ = 0.5;
-double dangerPercentage = 0.3;
+double dangerPercentage = 0.1;
 
 ros::Publisher lidar_alarm_publisher_;
 ros::Publisher lidar_dist_publisher_;

@@ -44,89 +44,95 @@ void alarmCallback(const std_msgs::Bool& alarm_msg) {
     if (g_lidar_alarm) {
         ROS_INFO("LIDAR alarm received!");
         action_client->cancelGoal();
+        action_client->waitForResult(); // wait forever... 
 
         ROS_INFO("turning around!");
         //commandSquarePath();
         std::vector<geometry_msgs::PoseStamped> poses(1);
         poses.at(0).pose.position.x = 0;
         poses.at(0).pose.position.y = 0;
-        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI/2);
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(PI*3/4);
 
         goal.path.poses = poses;
         action_client->sendGoal(goal);
-        // action_client->waitForResult(); // wait forever... 
+        action_client->waitForResult(); // wait forever... 
 
+        // new goal
         poses.resize(4);
 
         poses.at(0).pose.position.x = 0;
-        poses.at(0).pose.position.y = 3;
+        poses.at(0).pose.position.y = 5;
+        poses.at(0).pose.orientation = convertPlanarPhi2Quaternion(0);
 
         poses.at(1).pose.position.x = 0;
-        poses.at(1).pose.position.y = 3;
+        poses.at(1).pose.position.y = 5;
 
         poses.at(2).pose.position.x = 0;
-        poses.at(2).pose.position.y = 3;
+        poses.at(2).pose.position.y = 5;
 
         poses.at(3).pose.position.x = 0;
-        poses.at(3).pose.position.y = 3;
+        poses.at(3).pose.position.y = 5;
 
         goal.path.poses = poses;
-        // action_client->sendGoal(goal);
+
         action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
     }
 }
 
 int main(int argc, char** argv) {
-        ros::init(argc, argv, "path_action_client_node"); // name this node
-        ros::NodeHandle nh;
+    ros::init(argc, argv, "path_action_client_node"); // name this node
+    ros::NodeHandle nh;
 
-        alarm_subscriber = nh.subscribe("/lidar_alarm", 1, alarmCallback);
+    alarm_subscriber = nh.subscribe("/lidar_alarm", 1, alarmCallback);
 
-        // here is a "goal" object compatible with the server, as defined in mobot_action_server/action
-        mobot_action_server::pathGoal goal; 
-        
-        // use the name of our server, which is: example_action (named in mobot_action_server.cpp)
-        // the "true" argument says that we want our new client to run as a separate thread (a good idea)
-        action_client = new actionlib::SimpleActionClient<mobot_action_server::pathAction>("mobot_action", true);
-        
-        // attempt to connect to the server:
-        ROS_INFO("waiting for server: ");
-        bool server_exists = action_client->waitForServer(ros::Duration(5.0)); // wait for up to 5 seconds
-        // something odd in above: does not seem to wait for 5 seconds, but returns rapidly if server not running
-        //bool server_exists = action_client.waitForServer(); //wait forever
+    // here is a "goal" object compatible with the server, as defined in mobot_action_server/action
+    mobot_action_server::pathGoal goal; 
+    
+    // use the name of our server, which is: example_action (named in mobot_action_server.cpp)
+    // the "true" argument says that we want our new client to run as a separate thread (a good idea)
+    action_client = new actionlib::SimpleActionClient<mobot_action_server::pathAction>("mobot_action", true);
+    
+    // attempt to connect to the server:
+    ROS_INFO("waiting for server: ");
+    bool server_exists = action_client->waitForServer(ros::Duration(5.0)); // wait for up to 5 seconds
+    // something odd in above: does not seem to wait for 5 seconds, but returns rapidly if server not running
+    //bool server_exists = action_client.waitForServer(); //wait forever
 
-        if (!server_exists) {
-            ROS_WARN("could not connect to server; halting");
-            return 0; // bail out; optionally, could print a warning message and retry
-        }
-        
-       
-        ROS_INFO("connected to action server");  // if here, then we connected to the server;
+    if (!server_exists) {
+        ROS_WARN("could not connect to server; halting");
+        return 0; // bail out; optionally, could print a warning message and retry
+    }
+    
+   
+    ROS_INFO("connected to action server");  // if here, then we connected to the server;
 
-        // stuff a goal message:
-        geometry_msgs::Quaternion quat;
-        quat = convertPlanarPhi2Quaternion(0);
-        std::vector<geometry_msgs::PoseStamped> poses(4);
+    // stuff a goal message:
+    geometry_msgs::Quaternion quat;
+    quat = convertPlanarPhi2Quaternion(0);
+    std::vector<geometry_msgs::PoseStamped> poses(4);
 
-        poses.at(0).pose.position.x = 0;
-        poses.at(0).pose.position.y = 3;
-        poses.at(0).pose.orientation = quat;
+    poses.at(0).pose.position.x = 0;
+    poses.at(0).pose.position.y = 5;
+    poses.at(0).pose.orientation = quat;
 
-        poses.at(1).pose.position.x = 0;
-        poses.at(1).pose.position.y = 3;
+    poses.at(1).pose.position.x = 0;
+    poses.at(1).pose.position.y = 5;
 
-        poses.at(2).pose.position.x = 0;
-        poses.at(2).pose.position.y = 3;
+    poses.at(2).pose.position.x = 0;
+    poses.at(2).pose.position.y = 5;
 
-        poses.at(3).pose.position.x = 0;
-        poses.at(3).pose.position.y = 3;
+    poses.at(3).pose.position.x = 0;
+    poses.at(3).pose.position.y = 5;
 
-        goal.path.poses = poses;
-        // action_client->sendGoal(goal);
+    goal.path.poses = poses;
+
+    // while(ros::ok()) {
         action_client->sendGoal(goal, &doneCb, &activeCb, &feedbackCb);
         // action_client->waitForResult(); // wait forever... 
-
         ros::spin();
+        // ros::Duration(0.5).sleep();  
+    // }    
+
 
     return 0;
 }
